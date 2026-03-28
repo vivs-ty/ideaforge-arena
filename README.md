@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IdeaForge Arena
 
-## Getting Started
+Turn raw ideas into community-polished concepts in minutes.
 
-First, run the development server:
+IdeaForge Arena is an interactive app where users:
+
+1. Submit a rough one-sentence idea.
+2. Start a timed 60-second improve round.
+3. Submit a challenger version.
+4. Vote in A/B battles between champion and challenger.
+5. Watch the evolution timeline and contributor leaderboard update in real time.
+
+The app uses local storage for zero-config demos, so anyone can clone and run instantly.
+
+## Features
+
+- Timed improvement rounds
+- Head-to-head A/B voting with auto-close
+- Champion idea progression
+- Evolution timeline for each idea
+- Leaderboard based on contributions
+- Seed data for immediate exploration
+
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## Publish On GitHub
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+git init
+git add .
+git commit -m "feat: initial IdeaForge Arena"
+git branch -M main
+git remote add origin <your-repo-url>
+git push -u origin main
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploy on Vercel for the fastest setup.
 
-## Deploy on Vercel
+## Next Up
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Add Supabase auth for unique voters
+- Add public rooms and share links
+- Add moderation and profanity filters
+- Add analytics for top improving prompts
