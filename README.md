@@ -2,6 +2,10 @@
 
 Turn raw ideas into community-polished concepts in minutes.
 
+## Screenshot
+
+![IdeaForge Arena home screen](public/readme-screenshot.png)
+
 IdeaForge Arena now includes:
 
 1. Supabase authentication (magic link email sign-in).
