@@ -457,11 +457,17 @@ export default function RoomPage() {
       return;
     }
 
-    await supabase
+    const { error } = await supabase
       .from("ideas")
       .update({ round_end_at: new Date(Date.now() + ROUND_SECONDS * 1000).toISOString() })
       .eq("id", selectedIdea.id);
 
+    if (error) {
+      setNotice(error.message);
+      return;
+    }
+
+    setNotice("");
     await loadRoomData();
   };
 

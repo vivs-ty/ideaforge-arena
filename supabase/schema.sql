@@ -115,7 +115,7 @@ create policy "rooms_delete" on public.rooms for delete using (auth.uid() = crea
 -- ideas: anyone can read; authenticated users can create; owner can update/delete
 create policy "ideas_select" on public.ideas for select using (true);
 create policy "ideas_insert" on public.ideas for insert with check (auth.uid() = created_by);
-create policy "ideas_update" on public.ideas for update using (auth.uid() = created_by);
+create policy "ideas_update" on public.ideas for update using (auth.uid() is not null) with check (auth.uid() is not null);
 create policy "ideas_delete" on public.ideas for delete using (auth.uid() = created_by);
 
 -- versions: anyone can read; authenticated users can create their own
