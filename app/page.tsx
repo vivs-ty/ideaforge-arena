@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 
@@ -55,6 +55,21 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
+  const loadRooms = useCallback(async (): Promise<void> => {
+    if (!supabase) {
+      setRooms([]);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("rooms")
+      .select("slug,title,created_at")
+      .order("created_at", { ascending: false })
+      .limit(24);
+
+    setRooms(data ?? []);
+  }, [supabase]);
+
   useEffect(() => {
     if (!supabase) {
       setAuthReady(true);
@@ -62,6 +77,32 @@ export default function Home() {
     }
 
     const bootstrap = async (): Promise<void> => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const tokenHash = url.searchParams.get("token_hash");
+      const type = url.searchParams.get("type");
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setNotice(error.message);
+        }
+      } else if (tokenHash && (type === "signup" || type === "magiclink")) {
+        const { error } = await supabase.auth.verifyOtp({
+          type,
+          token_hash: tokenHash,
+        });
+        if (error) {
+          setNotice(error.message);
+        }
+      }
+
+      if (code || tokenHash) {
+        // Remove auth params so refreshes don't repeat the exchange call.
+        const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+        window.history.replaceState({}, "", cleanUrl);
+      }
+
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setAuthReady(true);
@@ -78,7 +119,7 @@ export default function Home() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [loadRooms, supabase]);
 
   useEffect(() => {
     if (!supabase || !session?.user) {
@@ -99,21 +140,6 @@ export default function Home() {
 
     void hydrateProfile();
   }, [session, supabase]);
-
-  const loadRooms = async (): Promise<void> => {
-    if (!supabase) {
-      setRooms([]);
-      return;
-    }
-
-    const { data } = await supabase
-      .from("rooms")
-      .select("slug,title,created_at")
-      .order("created_at", { ascending: false })
-      .limit(24);
-
-    setRooms(data ?? []);
-  };
 
   const sendMagicLink = async (): Promise<void> => {
     if (!supabase) {
