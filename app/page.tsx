@@ -47,7 +47,7 @@ export default function Home() {
   const hasSupabaseEnv = Boolean(supabase);
 
   const [session, setSession] = useState<Session | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(() => !hasSupabaseEnv);
   const [rooms, setRooms] = useState<RoomPreview[]>([]);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -72,7 +72,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!supabase) {
-      setAuthReady(true);
       return;
     }
 
@@ -115,6 +114,9 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      if (!nextSession) {
+        setDisplayName("");
+      }
       void loadRooms();
     });
 
@@ -123,7 +125,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!supabase || !session?.user) {
-      setDisplayName("");
       return;
     }
 

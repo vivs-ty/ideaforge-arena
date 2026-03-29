@@ -49,6 +49,11 @@ type DbVote = {
   pick: "A" | "B";
 };
 
+type DbErrorLike = {
+  message?: string;
+  code?: string;
+};
+
 type BattleView = {
   id: string;
   ideaId: string;
@@ -98,6 +103,24 @@ function relativeTime(iso: string): string {
 
 function userLabel(userId: string, names: Record<string, string>): string {
   return names[userId] ?? `user-${userId.slice(0, 8)}`;
+}
+
+function actionableDbError(context: string, error: DbErrorLike | null | undefined): string {
+  const message = (error?.message ?? "").toLowerCase();
+
+  if (error?.code === "42501" || message.includes("row-level security") || message.includes("permission denied")) {
+    return `${context} failed due to permissions. Sign in and run supabase/add-rls-policies.sql in Supabase SQL Editor.`;
+  }
+
+  if (message.includes("votes_battle_id_voter_id_key") || message.includes("duplicate key value violates unique constraint")) {
+    return "You already voted in this battle.";
+  }
+
+  if (message.includes("jwt") || message.includes("auth") || message.includes("not authenticated")) {
+    return `${context} failed because your session expired. Sign in again and retry.`;
+  }
+
+  return error?.message ?? `${context} failed. Please retry.`;
 }
 
 export default function RoomPage() {
@@ -453,7 +476,7 @@ export default function RoomPage() {
       .single();
 
     if (ideaResult.error || !ideaResult.data) {
-      setNotice(ideaResult.error?.message ?? "Failed to create idea.");
+      setNotice(actionableDbError("Creating idea", ideaResult.error));
       return;
     }
 
@@ -470,14 +493,19 @@ export default function RoomPage() {
       .single();
 
     if (versionResult.error || !versionResult.data) {
-      setNotice(versionResult.error?.message ?? "Failed to create initial version.");
+      setNotice(actionableDbError("Creating initial version", versionResult.error));
       return;
     }
 
-    await supabase
+    const championUpdate = await supabase
       .from("ideas")
       .update({ champion_version_id: (versionResult.data as { id: string }).id })
       .eq("id", ideaId);
+
+    if (championUpdate.error) {
+      setNotice(actionableDbError("Updating champion", championUpdate.error));
+      return;
+    }
 
     setNewIdeaTitle("");
     setNewIdeaText("");
@@ -497,7 +525,7 @@ export default function RoomPage() {
       .eq("id", selectedIdea.id);
 
     if (error) {
-      setNotice(error.message);
+      setNotice(actionableDbError("Starting round", error));
       return;
     }
 
@@ -539,7 +567,7 @@ export default function RoomPage() {
       .single();
 
     if (versionResult.error || !versionResult.data) {
-      setNotice(versionResult.error?.message ?? "Failed to create improvement.");
+      setNotice(actionableDbError("Creating improvement", versionResult.error));
       return;
     }
 
@@ -553,7 +581,7 @@ export default function RoomPage() {
     });
 
     if (battleResult.error) {
-      setNotice(battleResult.error.message);
+      setNotice(actionableDbError("Creating battle", battleResult.error));
       return;
     }
 
@@ -574,7 +602,7 @@ export default function RoomPage() {
     });
 
     if (voteResult.error) {
-      setNotice(voteResult.error.message);
+      setNotice(actionableDbError("Voting", voteResult.error));
       return;
     }
 

@@ -1,4 +1,4 @@
--- Run this in Supabase SQL Editor to fix room creation and all other write operations.
+-- Run this in Supabase SQL Editor to fix room creation and ideas/round write operations.
 -- Safe to run multiple times (uses "if not exists" equivalent via drop-first pattern).
 
 -- profiles
@@ -24,6 +24,7 @@ drop policy if exists "ideas_update" on public.ideas;
 drop policy if exists "ideas_delete" on public.ideas;
 create policy "ideas_select" on public.ideas for select using (true);
 create policy "ideas_insert" on public.ideas for insert with check (auth.uid() = created_by);
+-- Allow signed-in collaborators to start rounds and update champion state.
 create policy "ideas_update" on public.ideas for update using (auth.uid() is not null) with check (auth.uid() is not null);
 create policy "ideas_delete" on public.ideas for delete using (auth.uid() = created_by);
 
