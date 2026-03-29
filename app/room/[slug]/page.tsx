@@ -395,6 +395,40 @@ export default function RoomPage() {
     return Array.from(points.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
   }, [ideas]);
 
+  const canStartRound = Boolean(
+    session &&
+      selectedIdea &&
+      !openBattle &&
+      !(selectedIdea.roundEndAt && roundSecondsLeft > 0),
+  );
+
+  const startRoundHint = !session
+    ? "Sign in to start a round."
+    : openBattle
+      ? "An active battle is running. Vote to close it first."
+      : selectedIdea?.roundEndAt && roundSecondsLeft > 0
+        ? `Round already live: ${roundSecondsLeft}s remaining.`
+        : "Start a 60s round to collect challengers.";
+
+  const canSubmitChallenger = Boolean(
+    session &&
+      selectedIdea &&
+      selectedIdea.roundEndAt &&
+      roundSecondsLeft > 0 &&
+      !openBattle &&
+      improvementDraft.trim(),
+  );
+
+  const submitHint = !session
+    ? "Sign in to submit improvements."
+    : openBattle
+      ? "A battle is active. Vote now, then submit the next challenger."
+      : !selectedIdea?.roundEndAt || roundSecondsLeft <= 0
+        ? "Start a round to submit improvements."
+        : !improvementDraft.trim()
+          ? "Write your challenger text to enable submit."
+          : `Round closes in ${roundSecondsLeft}s`;
+
   const createIdea = async (): Promise<void> => {
     if (!supabase || !session?.user || !room) {
       setNotice("Sign in first to post ideas.");
@@ -716,13 +750,14 @@ export default function RoomPage() {
                   <button
                     className="rounded-xl bg-ocean-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-ocean-600 disabled:opacity-50"
                     onClick={() => void startRound()}
-                    disabled={!session || Boolean(openBattle) || Boolean(selectedIdea.roundEndAt && roundSecondsLeft > 0)}
+                    disabled={!canStartRound}
                   >
                     {selectedIdea.roundEndAt && roundSecondsLeft > 0
                       ? `Round Live: ${roundSecondsLeft}s`
                       : "Start 60s Round"}
                   </button>
                 </div>
+                <p className="mt-2 text-xs text-stone-600">{startRoundHint}</p>
 
                 <article className="mt-5 rounded-2xl border border-stone-300/70 bg-white/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">Current Champion</p>
@@ -743,14 +778,10 @@ export default function RoomPage() {
                     disabled={!session}
                   />
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-stone-600">
-                      {selectedIdea.roundEndAt && roundSecondsLeft > 0
-                        ? `Round closes in ${roundSecondsLeft}s`
-                        : "Start a round to submit improvements."}
-                    </p>
+                    <p className="text-xs text-stone-600">{submitHint}</p>
                     <button
                       className="rounded-xl bg-coral-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-500 disabled:opacity-50"
-                      disabled={!session || !selectedIdea.roundEndAt || roundSecondsLeft <= 0 || Boolean(openBattle)}
+                      disabled={!canSubmitChallenger}
                       onClick={() => void submitImprovement()}
                     >
                       Submit Challenger
