@@ -112,20 +112,26 @@ export default function RoomPage() {
   const [ideas, setIdeas] = useState<IdeaView[]>([]);
   const [selectedIdeaId, setSelectedIdeaId] = useState<string | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(supabase));
   const [notice, setNotice] = useState("");
   const [newIdeaTitle, setNewIdeaTitle] = useState("");
   const [newIdeaText, setNewIdeaText] = useState("");
   const [improvementDraft, setImprovementDraft] = useState("");
   const [nowTick, setNowTick] = useState(() => Date.now());
 
-  const loadRoomData = useCallback(async (): Promise<void> => {
+  const loadRoomData = useCallback(async (options?: { silent?: boolean }): Promise<void> => {
+    const silent = options?.silent ?? false;
+
     if (!supabase || !slug) {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
       return;
     }
 
-    setLoading(true);
+    if (!silent) {
+      setLoading(true);
+    }
 
     const roomResult = await supabase
       .from("rooms")
@@ -307,13 +313,12 @@ export default function RoomPage() {
     }
 
     if (changed) {
-      await loadRoomData();
+      await loadRoomData({ silent: true });
     }
   }, [ideas, loadRoomData, room, session?.user, supabase]);
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
       return;
     }
 
@@ -329,7 +334,7 @@ export default function RoomPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      void loadRoomData();
+      void loadRoomData({ silent: true });
     });
 
     return () => subscription.unsubscribe();
@@ -338,21 +343,18 @@ export default function RoomPage() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setNowTick(Date.now());
+      void finalizeEligibleBattles();
     }, 1000);
 
     const poll = window.setInterval(() => {
-      void loadRoomData();
+      void loadRoomData({ silent: true });
     }, 5000);
 
     return () => {
       window.clearInterval(timer);
       window.clearInterval(poll);
     };
-  }, [loadRoomData]);
-
-  useEffect(() => {
-    void finalizeEligibleBattles();
-  }, [finalizeEligibleBattles, nowTick]);
+  }, [finalizeEligibleBattles, loadRoomData]);
 
   const selectedIdea = useMemo(
     () => ideas.find((idea) => idea.id === selectedIdeaId) ?? null,
